@@ -16,9 +16,36 @@ select,input{font:inherit;border:1px solid var(--line);background:white;border-r
 .step-list{display:grid;gap:14px;margin:22px 0}.step{display:flex;gap:14px;padding:18px;border:1px solid var(--line);border-radius:15px;align-items:flex-start}.num{flex:none;width:32px;height:32px;border-radius:50%;background:var(--blue2);color:var(--blue);display:grid;place-items:center;font-weight:800}.step p{margin:2px 0;line-height:1.65}.footer{margin-top:auto;padding-top:28px;display:flex;justify-content:space-between;align-items:center;gap:12px}.footnote{color:var(--muted);font-size:12px}.controls{display:flex;gap:8px}.controls button{border:1px solid var(--line);border-radius:11px;padding:11px 15px;background:#fff;cursor:pointer;font-weight:700}.controls .next{background:var(--blue);color:white;border-color:var(--blue)}.controls button:disabled{opacity:.4;cursor:not-allowed}
 @media(max-width:760px){.shell{display:block}aside{position:relative;height:auto;border:0;border-bottom:1px solid var(--line);padding:16px}.side-title{font-size:17px;margin:6px 0 12px}.nav{display:flex;overflow:auto;gap:5px}.nav button{min-width:125px;padding:9px}.progress-wrap{margin-top:12px}main{padding:14px}.slide{min-height:calc(100vh - 170px);padding:23px}.topic-grid{grid-template-columns:1fr}}
 .note{background:#fff7e8;border-color:#f2d6a9}.prompt{background:#4a3020;color:#fff9ef}.num{background:#ffe4b6;color:#a85c09}.nav button.active{background:#fff0d5;color:#a85c09}.bar i{background:linear-gradient(90deg,#f6b544,#e67c15)}button.action,.controls .next{background:linear-gradient(135deg,#f4b33f,#e77a12);border-color:#e77a12}.kicker{color:#b96b10}.step{background:#fffdfa}.intro-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}.intro-card{border:1px solid #f0dfc7;background:#fffdfa;border-radius:15px;padding:16px}.intro-card h3{margin:0 0 10px;color:#a85c09}.flowline{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:18px 0}.flowbox{background:#fff0d5;border:1px solid #f2d6a9;border-radius:12px;padding:12px;font-weight:700}.arrow{color:#e78a16;font-weight:900;font-size:20px}.@media(max-width:760px){.intro-grid{grid-template-columns:1fr}}
+
+.teacher-panel{margin-top:18px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#fffdfa;font-size:13px;line-height:1.5}
+.teacher-heading{font-weight:800;color:#a85c09;margin-bottom:8px}.teacher-status{color:var(--muted);margin:6px 0 10px;overflow-wrap:anywhere}.teacher-form{display:grid;gap:7px}.teacher-form input{margin-bottom:5px}.teacher-form button{width:100%;margin-top:5px}.uid-text{font-size:11px;overflow-wrap:anywhere;color:var(--muted);margin:8px 0}.room-info{margin-top:10px;color:var(--muted)}.student-status{margin-top:16px;padding:10px;border-radius:10px;background:#eef7ff;color:#245b83;font-size:12px}.teacher-panel[hidden],#teacherLoggedIn[hidden],#studentStatus[hidden]{display:none!important}
+body.readonly .nav button,body.readonly .controls button{opacity:.45;cursor:not-allowed}
+@media(max-width:760px){.teacher-panel{max-width:100%}.teacher-form{grid-template-columns:1fr}}
 </style></head><body>
-<div class="shell"><aside><div class="brand">AI PRACTICE · STEP BY STEP</div><div class="side-title">AI로 쉽게<br>블로그 작성하기</div><nav class="nav" id="nav"></nav><div class="progress-wrap"><span id="progressText">1 / 6</span><div class="bar"><i id="progressBar"></i></div></div></aside>
+<div class="shell"><aside><div class="brand">AI PRACTICE · STEP BY STEP</div><div class="side-title">AI로 쉽게<br>블로그 작성하기</div><nav class="nav" id="nav"></nav><div class="progress-wrap"><span id="progressText">1 / 6</span><div class="bar"><i id="progressBar"></i></div></div>
+<section id="teacherPanel" class="teacher-panel" hidden>
+  <div class="teacher-heading">🔐 강사 수업 연결</div>
+  <div id="teacherStatus" class="teacher-status">Firebase 연결을 확인하고 있습니다.</div>
+  <form id="teacherLoginForm" class="teacher-form">
+    <label class="field-label" for="teacherEmail">강사 이메일</label>
+    <input id="teacherEmail" type="email" autocomplete="username" placeholder="강사 이메일" required>
+    <label class="field-label" for="teacherPassword">비밀번호</label>
+    <input id="teacherPassword" type="password" autocomplete="current-password" placeholder="비밀번호" required>
+    <button class="action" type="submit">강사 로그인</button>
+  </form>
+  <div id="teacherLoggedIn" hidden>
+    <div id="teacherUid" class="uid-text"></div>
+    <button id="teacherLogout" class="action secondary" type="button">로그아웃</button>
+  </div>
+  <div class="room-info">수업 코드: <b id="roomCodeLabel"></b></div>
+</section>
+<div id="studentStatus" class="student-status" hidden>학생 모드 · 강사 화면을 기다리는 중</div>
+</aside>
 <main><article class="slide" id="slide"></article></main></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="./js/config.js"></script>
 <script>
 const topics=[{"id": 1, "name": "작은 집 정리·수납", "ideas": ["폭이 좁은 현관 정리", "옷장 한 칸 계절옷 교체", "주방 서랍 구역 나누기", "욕실 소모품 재고 줄이기", "수납함 사기 전 치수 재는 법"], "materials": "공간 치수, 정리 전후 사진, 실제로 비운 물건"}, {"id": 2, "name": "1~2인 집밥과 식재료 관리", "ideas": ["한 재료로 저녁 세 끼", "장보기 전 냉장고 점검", "일주일 반찬 구성", "소량 장보기 품목표", "실제로 쓰는 식재료 소분 용기 비교"], "materials": "장보기 영수증, 조리 시간, 과정 사진"}, {"id": 3, "name": "생활비와 소비 기록", "ideas": ["한 달 구독 서비스 점검", "대용량과 소포장 단위가격 비교", "배달비 포함 지출 기록", "생활용품 재구매 목록", "무지출 주말에 실제로 한 일"], "materials": "직접 기록한 단가와 사용 빈도, 개인정보를 가린 영수증"}, {"id": 4, "name": "내돈내산 생활용품 비교", "ideas": ["빨래건조대 접었을 때 크기", "텀블러 세척 편의 비교", "재사용 장바구니 수납 비교", "청소도구 보관과 교체 비용", "한 달 뒤에도 쓰는 수납용품"], "materials": "실측, 사용 기간, 세척·보관 사진, 불편했던 점"}, {"id": 5, "name": "동네 산책과 가까운 나들이", "ideas": ["비 오는 날 갈 만한 실내 공간", "혼자 걷기 좋은 1시간 코스", "차 없이 가는 주말 나들이", "주차장에서 입구까지 동선", "카페 한 곳과 산책로를 묶은 반나절 코스"], "materials": "직접 찍은 길 사진, 이동 시간, 방문일, 운영기관 링크"}, {"id": 6, "name": "혼밥·혼카페·동네 맛집", "ideas": ["혼자 앉기 편한 좌석", "점심시간 실제 대기", "메뉴별 양과 가격", "포장 후 집에서 먹은 후기", "재방문 때 고른 메뉴와 이유"], "materials": "메뉴판과 음식 사진, 방문 요일·시간, 영수증"}, {"id": 7, "name": "현실 옷장과 데일리룩", "ideas": ["기본 셔츠 한 벌로 세 가지 코디", "바지 실측하고 온라인 구매하기", "비 오는 날 신발 선택", "계절 옷장 정리 순서", "한 달간 자주 입은 옷 기록"], "materials": "실제 착장, 옷 실측, 착용 상황, 세탁 후 상태"}, {"id": 8, "name": "기초 화장품·뷰티 도구 사용기", "ideas": ["파우치 속 자주 쓰는 도구", "립 제품의 실제 발색 비교", "브러시 세척·건조 과정", "휴대용 거울·빗 비교", "여행용 화장품 소분 준비"], "materials": "동일한 조명의 사진, 사용감 메모, 제품 표기"}, {"id": 9, "name": "걷기와 일상 운동 기록", "ideas": ["퇴근 후 20분 걷기 코스", "비 오는 날 실내 걷기 기록", "운동복 가방 구성", "한 달 산책 달력", "운동화를 고를 때 직접 확인한 착화감"], "materials": "동선, 시간, 실천 기록, 착용 사진"}, {"id": 10, "name": "베란다 식물과 작은 정원", "ideas": ["창 방향별 햇빛 기록", "입문 식물 한 달 관찰", "집에 있는 화분 받침 비교", "분갈이 전후 기록", "물 주는 날짜를 기록하는 방법"], "materials": "같은 각도에서 찍은 성장 사진, 관리 일지"}, {"id": 11, "name": "취미 초보의 성장 기록", "ideas": ["뜨개질 첫 작품과 수정 과정", "수채화 종이 비교", "다이어리 꾸미기 준비물", "초보 도예 수업 준비", "다 쓴 재료와 다시 산 재료"], "materials": "완성작, 작업 시간, 재료비, 실패하고 수정한 과정"}, {"id": 12, "name": "독서와 동네 문화생활", "ideas": ["도서관에서 책 찾고 빌리기", "한 달 독서 주제 정하기", "책 한 권에서 생활에 적용한 한 가지", "작은 전시 관람 동선", "혼자 공연 가기 전 좌석 고르기"], "materials": "본인 감상, 관람 동선, 공공시설 안내, 직접 만든 독서 메모"}, {"id": 13, "name": "스마트폰과 디지털 생활", "ideas": ["가족사진 월별로 정리", "여행 일정 지도에 저장", "휴대폰으로 서류 스캔", "온라인 장보기 목록 공유", "AI로 냉장고 재료 활용 아이디어 정리"], "materials": "직접 따라 한 화면, 개인정보를 가린 캡처, 설정 순서"}, {"id": 14, "name": "반려동물과 함께하는 생활", "ideas": ["산책 가방 구성", "반려용품 세척·보관", "이동가방 실측과 사용기", "비 오는 날 실내 놀이 준비", "동반 가능 장소 방문 기록"], "materials": "본인 반려동물과 용품 사진, 사용 기간, 장소의 이용 조건"}, {"id": 15, "name": "아이와 함께하는 주말·집 활동", "ideas": ["종이와 색연필로 하는 집 놀이", "어린이 도서관 이용 동선", "비 오는 날 실내 나들이", "방학 준비물 정리", "가족 나들이 가방 점검표"], "materials": "준비물과 완성작 사진, 이동·대기 시간, 얼굴과 학교 정보가 드러나지 않는 기록"}, {"id": 16, "name": "재사용과 계절별 생활 관리", "ideas": ["택배 상자 재사용", "오래된 옷 수선 전후", "계절 침구 교체 순서", "장마철 현관 정리", "지역별 분리배출 정보 확인법"], "materials": "수선 과정, 재사용 비용, 지자체 공식 안내"}];
 const pages=[
@@ -71,10 +98,59 @@ const pages=[
 let current=0;
 const nav=document.getElementById('nav');
 pages.forEach((p,i)=>{const b=document.createElement('button');b.innerHTML=`<span>${i===0?'INTRO':i===7?'FINISH':'STEP '+(i)}</span>${p.title}`;b.onclick=()=>go(i);nav.appendChild(b)});
-function go(i){current=Math.max(0,Math.min(pages.length-1,i));document.getElementById('slide').innerHTML=`<div class="kicker">${pages[current].kicker}</div><h1>${pages[current].title}</h1><h2>${pages[current].subtitle}</h2>${pages[current].body}<div class="footer"><div class="footnote">키보드 ← → 로도 이동할 수 있어요</div><div class="controls"><button onclick="go(current-1)" ${current===0?'disabled':''}>← 이전</button><button class="next" onclick="go(current+1)" ${current===pages.length-1?'disabled':''}>다음 →</button></div></div>`;nav.querySelectorAll('button').forEach((b,j)=>b.classList.toggle('active',j===current));document.getElementById('progressText').textContent=`${current+1} / ${pages.length}`;document.getElementById('progressBar').style.width=`${(current+1)/pages.length*100}%`;window.scrollTo({top:0,behavior:'smooth'});if(current===2)initializeTopics()}
+function go(i, fromRemote=false){
+ if((isStudent || (teacherMode && !teacherUser)) && !fromRemote) return;
+ current=Math.max(0,Math.min(pages.length-1,i));
+ document.getElementById('slide').innerHTML=`<div class="kicker">${pages[current].kicker}</div><h1>${pages[current].title}</h1><h2>${pages[current].subtitle}</h2>${pages[current].body}<div class="footer"><div class="footnote">${isStudent?'강사가 슬라이드를 이동하면 화면이 자동으로 바뀝니다.':'키보드 ← → 로도 이동할 수 있어요'}</div><div class="controls"><button onclick="go(current-1)" ${current===0 || isStudent || (teacherMode && !teacherUser)?'disabled':''}>← 이전</button><button class="next" onclick="go(current+1)" ${current===pages.length-1 || isStudent || (teacherMode && !teacherUser)?'disabled':''}>다음 →</button></div></div>`;
+ nav.querySelectorAll('button').forEach((b,j)=>b.classList.toggle('active',j===current));
+ document.getElementById('progressText').textContent=`${current+1} / ${pages.length}`;
+ document.getElementById('progressBar').style.width=`${(current+1)/pages.length*100}%`;
+ window.scrollTo({top:0,behavior:'smooth'});if(current===2)initializeTopics();
+ if(!fromRemote && teacherMode && teacherUser && roomRef){roomRef.child('slide').set(current).catch(showFirebaseError)}
+}
 function copyText(id,btn){let txt=document.getElementById(id).innerText; navigator.clipboard.writeText(txt).then(()=>{const old=btn.textContent;btn.textContent='복사됨 ✓';setTimeout(()=>btn.textContent=old,1600)}).catch(()=>{const area=document.createElement('textarea');area.value=txt;document.body.appendChild(area);area.select();document.execCommand('copy');area.remove();btn.textContent='복사됨 ✓';setTimeout(()=>btn.textContent='프롬프트 복사',1600)})}
 function initializeTopics(){const s=document.getElementById('topic');if(s.options.length>1)return;topics.forEach(t=>{let o=document.createElement('option');o.value=t.id;o.textContent=t.name;s.appendChild(o)})}
 function updateIdeas(){const t=topics.find(x=>x.id===Number(document.getElementById('topic').value));const s=document.getElementById('idea');s.innerHTML='<option value="">세부 글감을 선택하세요</option>';if(t){t.ideas.forEach((idea,i)=>{let o=document.createElement('option');o.value=idea;o.textContent=`${i+1}. ${idea}`;s.appendChild(o)});const m=document.getElementById('materials');m.style.display='block';m.innerHTML='<b>준비하면 좋은 자료</b><br>'+t.materials}else document.getElementById('materials').style.display='none';updatePrompt()}
 function updatePrompt(){const custom=document.getElementById('customTopic').value.trim();const selected=document.getElementById('idea').value;const subject=custom||selected;document.getElementById('chosen').style.display=subject?'block':'none';document.getElementById('chosen').textContent=subject?'선택한 글감: '+subject:'';document.getElementById('p2').textContent=subject?`[${subject}]을 주제로 글을 작성해주세요.`:'세부 글감을 선택하거나 직접 입력하면 프롬프트가 여기에 표시됩니다.'}
-document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;if(e.key==='ArrowRight')go(current+1);if(e.key==='ArrowLeft')go(current-1)});go(0);
+const params=new URLSearchParams(location.search);
+const teacherMode=params.has('teacher');
+const isStudent=!teacherMode && params.has('room');
+const roomCode=(params.get('room')||'default').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,50)||'default';
+let teacherUser=null, firebaseDb=null, roomRef=null;
+const teacherPanel=document.getElementById('teacherPanel');
+const teacherStatus=document.getElementById('teacherStatus');
+const teacherLoginForm=document.getElementById('teacherLoginForm');
+const teacherLoggedIn=document.getElementById('teacherLoggedIn');
+const studentStatus=document.getElementById('studentStatus');
+document.getElementById('roomCodeLabel').textContent=roomCode;
+if(teacherMode){teacherPanel.hidden=false;document.body.classList.add('readonly');}
+if(isStudent){studentStatus.hidden=false;document.body.classList.add('readonly');}
+function setTeacherStatus(message,isError=false){teacherStatus.textContent=message;teacherStatus.style.color=isError?'#b42318':'var(--muted)';}
+function showFirebaseError(error){console.error(error);const msg=(error&&error.code==='PERMISSION_DENIED')?'권한 거부(permission_denied): Realtime Database 규칙의 UID가 로그인한 강사 UID와 같은지 확인하세요.':(error&&error.message)||'Firebase 연결 중 오류가 발생했습니다.';if(teacherMode)setTeacherStatus(msg,true);if(isStudent)studentStatus.textContent=msg;}
+function setTeacherUi(user){
+ teacherUser=user||null;
+ if(!teacherMode)return;
+ document.body.classList.toggle('readonly',!teacherUser);
+ teacherLoginForm.hidden=!!teacherUser;teacherLoggedIn.hidden=!teacherUser;
+ if(teacherUser){document.getElementById('teacherUid').textContent='로그인 UID: '+teacherUser.uid+' (이 UID를 Firebase 규칙의 강사 UID와 일치시켜야 합니다)';setTeacherStatus('로그인 완료. 수업 슬라이드를 조작할 수 있습니다.');}
+ else setTeacherStatus('강사 이메일과 비밀번호로 로그인하세요.');
+ go(current,true);
+ if(teacherUser && roomRef){roomRef.child('slide').once('value').then(s=>{if(s.exists())go(Number(s.val())||0,true);else roomRef.child('slide').set(current).catch(showFirebaseError);}).catch(showFirebaseError);}
+}
+function startFirebase(){
+ try{
+  if(!window.LECTURE_CONFIG||!window.LECTURE_CONFIG.firebase)throw new Error('js/config.js의 window.LECTURE_CONFIG.firebase 설정을 찾을 수 없습니다.');
+  if(!window.firebase)throw new Error('Firebase SDK를 불러오지 못했습니다. 인터넷 연결을 확인하세요.');
+  const config=window.LECTURE_CONFIG.firebase;
+  if(!config.apiKey||!config.authDomain||!config.databaseURL||!config.projectId||!config.appId)throw new Error('config.js의 Firebase 설정값 5개를 모두 확인하세요.');
+  if(!firebase.apps.length)firebase.initializeApp(config);
+  const auth=firebase.auth();firebaseDb=firebase.database();roomRef=firebaseDb.ref('rooms/'+roomCode);
+  if(teacherMode){setTeacherStatus('Firebase 연결됨. 강사 로그인을 기다립니다.');auth.onAuthStateChanged(user=>setTeacherUi(user),showFirebaseError);}
+  if(isStudent){roomRef.child('slide').on('value',snapshot=>{if(snapshot.exists()){const n=Number(snapshot.val());if(Number.isInteger(n))go(n,true);studentStatus.textContent='학생 모드 · 수업 연결됨 · '+roomCode;}else studentStatus.textContent='학생 모드 · 강사가 수업을 시작하기를 기다리는 중';},showFirebaseError);}
+  teacherLoginForm.addEventListener('submit',async e=>{e.preventDefault();const email=document.getElementById('teacherEmail').value.trim();const password=document.getElementById('teacherPassword').value;const button=teacherLoginForm.querySelector('button');button.disabled=true;button.textContent='로그인 중…';try{await auth.signInWithEmailAndPassword(email,password);}catch(error){setTeacherStatus(error.code==='auth/invalid-credential'?'이메일 또는 비밀번호를 확인하세요.':error.message,true);}finally{button.disabled=false;button.textContent='강사 로그인';}});
+  document.getElementById('teacherLogout').addEventListener('click',()=>auth.signOut().catch(showFirebaseError));
+ }catch(error){showFirebaseError(error);}
+}
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;if(e.key==='ArrowRight')go(current+1);if(e.key==='ArrowLeft')go(current-1)});
+go(0,true);startFirebase();
 </script></body></html>
