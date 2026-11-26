@@ -3,7 +3,7 @@ window.LECTURE_CONFIG={
     apiKey:"AIzaSyDm0oiUh5wfrc6a0EOtEz6ytwDnbzfIFMY",
     authDomain:"learn-run-87350.firebaseapp.com",
     databaseURL:"https://learn-run-87350-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId:"project-9046219456",
+    projectId:"learn-run-87350",
     appId:"1:90462194561:web:756944ebbe40614d9c3680"
   }
 };
